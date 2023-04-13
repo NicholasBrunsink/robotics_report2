@@ -16,6 +16,7 @@ def get_ball(ballPoints):
 	global points
 	points = ballPoints.points
 
+# callback function for /toggleInit subscriber
 def toggle_callback(data):
 	global initializing
 	initializing = data.data
@@ -25,7 +26,7 @@ def main():
 	# Empty SphereParams msg for storing sphere params to publish
 	params = SphereParams()
 	
-	# Initialize node, subscriber, and publisher
+	# Initialize node, subscribers, and publishers
 	rospy.init_node('sphere_fit', anonymous = True)
 	ballSub = rospy.Subscriber("/xyz_cropped_ball", XYZarray, get_ball)
 	toggle_init_sub = rospy.Subscriber("/toggleInit", Bool, toggle_callback)
@@ -44,9 +45,11 @@ def main():
 		
 	# main rospy loop
 	while not rospy.is_shutdown():
+		# prevent collecting performing initialization calculations until initialization is enabled
 		print("Waiting for initialization msg on /toggleInit")
 		while not rospy.is_shutdown() and not initializing:
 			pass
+		
 		print("Initializing")
 		while not rospy.is_shutdown() and initializing:
 			# empty x, y, z, and equation lists for esitmation calculations
