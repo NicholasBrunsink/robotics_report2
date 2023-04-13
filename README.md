@@ -1,6 +1,6 @@
 # robotics_report2
 ## Ros flow
-###Prerequisites:
+### Prerequisites:
 1. roscore
 2. roslaunch ur_gazebo ur5e_bringup.launch
 3. rosrun ur5e_control ur5e_controller
@@ -11,7 +11,7 @@
 8. rosrun rviz rviz (to see sphere)
 9. rosrun rqt_gui rqt_gui (to trigger initialization and movement booleans)
 
-###Running movement plan
+### Running movement plan
 First run
 1. rosrun robotics_report2 detect_ball.py
 2. rosrun robotics_report2 sphere_fit.py
