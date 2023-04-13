@@ -18,15 +18,11 @@ toolpose = Twist()
 sphere = SphereParams()
 drop_point = Twist()
 
-# initializing flag for determining when toolpose data is recieved
-twistDataRecieved = False
-sphereDataRecieved = False
+# initializing flag for determining when movement is enabled
 toggleMove = False
 
+# called when /convert/initCoord subscriber recieves new data
 def twist_callback(data):
-	'''
-	called when /ur5e/toolpose is published to store initial toolpose data
-	'''	
 	toolpose.linear.x = data.linear.x
 	toolpose.linear.y = data.linear.y
 	toolpose.linear.z = data.linear.z
@@ -34,10 +30,12 @@ def twist_callback(data):
 	toolpose.angular.y = data.angular.y
 	toolpose.angular.z = data.angular.z
 	
+# called when /toggleMove subscriber recieves new data
 def toggle_callback(data):
 	global toggleMove
 	toggleMove = data.data
-	
+
+# called when /convert/sphereCoord published new data
 def sphere_callback(data):
 	global sphere
 	sphere.xc = data.xc
@@ -48,11 +46,10 @@ def sphere_callback(data):
 def main():
 	# initialize node
 	rospy.init_node('pickup_object', anonymous=True)
-	tfBuffer = tf2_ros.Buffer()
 	
 	# create publisher to publish Plan 
 	plan_pub = rospy.Publisher('/plan', Plan, queue_size = 10)
-
+	# subscriber for listening when to enable movement
 	movebool_sub = rospy.Subscriber('/toggleMove', Bool, toggle_callback)
 	
 	while not rospy.is_shutdown():
@@ -65,13 +62,9 @@ def main():
 		while not rospy.is_shutdown() and not toggleMove:
 			pass
 		
-		# unsubscribe from /ur5e/toolpose after initial pos is stored
-		toolpose_sub.unregister()
-		# unsubscribe from /sphereparam after storing good sphere location
-		sphereparam_sub.unregister()
-		
 		print("Movement Initialized")
 	
+		# creating location to drop ball based on initial position
 		drop_point.linear.x = toolpose.linear.x + 0.001
 		drop_point.linear.y = toolpose.linear.y + 0.001
 		drop_point.linear.z = sphere.zc + 0.5*sphere.radius
