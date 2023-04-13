@@ -33,17 +33,16 @@ def main():
 	
 	# set the loop frequency
 	rate = rospy.Rate(10)
-	
-	#Define initial conditions 
-	xc_out = -0.03
-	yc_out = -0.03
-	zc_out = 0.52
-	p_out = -0.2
-	r_out = 0.056
-	gain = 0.15
 		
 	# main rospy loop
 	while not rospy.is_shutdown():
+		#Define initial conditions 
+		xc_out = -0.01
+		yc_out = -0.01
+		zc_out = 0.448
+		p_out = -0.2
+		r_out = 0.050
+		gain = 0.15
 		print("Waiting for initialization msg on /toggleInit")
 		while not rospy.is_shutdown() and not initializing:
 			pass
@@ -76,7 +75,7 @@ def main():
 			p_out = gain*P[3][0] + (1-gain)*p_out
 			
 			if xc_out**2 + yc_out**2 + zc_out**2 + p_out < 0:
-				r_in = r_out
+				r_in = 0
 			# set radius to calculated value is radius is not imaginary
 			else:
 				r_in = math.sqrt(xc_out**2 + yc_out**2 + zc_out**2 + p_out)
@@ -87,7 +86,7 @@ def main():
 			params.xc = xc_out
 			params.yc = yc_out
 			params.zc = zc_out
-			params.radius = r_out
+			params.radius = r_out/2
 		
 			print("\nSphere params")
 			print(params)
