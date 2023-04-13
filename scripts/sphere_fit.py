@@ -79,7 +79,7 @@ def main():
 			p_out = gain*P[3][0] + (1-gain)*p_out
 			
 			if xc_out**2 + yc_out**2 + zc_out**2 + p_out < 0:
-				r_in = r_out
+				r_in = 0
 			# set radius to calculated value is radius is not imaginary
 			else:
 				r_in = math.sqrt(xc_out**2 + yc_out**2 + zc_out**2 + p_out)
