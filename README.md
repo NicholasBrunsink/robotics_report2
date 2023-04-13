@@ -4,6 +4,9 @@
 - robot_vision_lectures: https://github.com/hsaeidi-uncw/robot_vision_lectures
 - robot_filtering_lectures: https://github.com/hsaeidi-uncw/robot_filtering_lectures (for reference of filtering implementation)
 
+## Helpful ROS docs
+- http://wiki.ros.org/
+
 ## Ros flow
 ### Prerequisites:
 1. roscore
