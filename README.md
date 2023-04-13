@@ -10,7 +10,7 @@
 7. roslaunch ur5e_control frame_publisher.launch
 8. rosrun rviz rviz (to see frames and sphere)
 9. rosrun rqt_gui rqt_gui (to trigger initialization and movement booleans)
-10. Add message publishers that publish to /toggleInit and /toggleMove (make sure both stay False for now)
+10. In rqt_gui: Add message publishers that publish to /toggleInit and /toggleMove (make sure both stay False for now)
 
 ### Running movement plan
 First run
