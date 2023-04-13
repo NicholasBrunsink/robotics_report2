@@ -1,8 +1,8 @@
 # robotics_report2
 ## Github Repos used
-ur5e_control: https://github.com/hsaeidi-uncw/ur5e_control
-robot_vision_lectures: https://github.com/hsaeidi-uncw/robot_vision_lectures
-robot_filtering_lectures: https://github.com/hsaeidi-uncw/robot_filtering_lectures (for reference of filtering implementation)
+- ur5e_control: https://github.com/hsaeidi-uncw/ur5e_control
+- robot_vision_lectures: https://github.com/hsaeidi-uncw/robot_vision_lectures
+- robot_filtering_lectures: https://github.com/hsaeidi-uncw/robot_filtering_lectures (for reference of filtering implementation)
 
 ## Ros flow
 ### Prerequisites:
