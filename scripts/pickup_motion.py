@@ -65,11 +65,6 @@ def main():
 		while not rospy.is_shutdown() and not toggleMove:
 			pass
 		
-		# unsubscribe from /ur5e/toolpose after initial pos is stored
-		toolpose_sub.unregister()
-		# unsubscribe from /sphereparam after storing good sphere location
-		sphereparam_sub.unregister()
-		
 		print("Movement Initialized")
 	
 		drop_point.linear.x = toolpose.linear.x + 0.001

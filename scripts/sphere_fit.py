@@ -38,9 +38,9 @@ def main():
 	xc_out = -0.03
 	yc_out = -0.03
 	zc_out = 0.52
-	p_out = -0.23
+	p_out = -0.2
 	r_out = 0.056
-	gain = 0.05
+	gain = 0.15
 		
 	# main rospy loop
 	while not rospy.is_shutdown():
