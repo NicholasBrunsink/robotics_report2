@@ -10,14 +10,14 @@ import tf2_ros
 from tf.transformations import *
 from geometry_msgs.msg import Quaternion
 import tf2_geometry_msgs
-
 import math
 
-# initializing Twist to store initial tool pose
+# Twist to store initial tool pose
 toolpose = Twist()
+# SphereParams to store initial sphere parameters
 sphere = SphereParams()
-# initializing flag for determining when toolpose data is recieved
 
+# initializing flag for determining when initialization is enabled
 toggleInit = False
 
 def twist_callback(data):
@@ -33,10 +33,16 @@ def twist_callback(data):
 	
 	
 def toggle_callback(data):
+	'''
+	called when /toggleInit is published for initialization
+	'''
 	global toggleInit
 	toggleInit = data.data
 	
 def sphere_callback(data):
+	'''
+	called when /sphere_params is published to store sphere data
+	'''
 	global sphere
 	sphere.xc = data.xc
 	sphere.yc = data.yc
@@ -47,6 +53,7 @@ def main():
 	# initialize node
 	rospy.init_node('cam_to_bot', anonymous=True)
 	
+	# initialize Buffer and Listener for Transform conversion 
 	tfBuffer = tf2_ros.Buffer()
 	listener = tf2_ros.TransformListener(tfBuffer)
 	
@@ -56,28 +63,27 @@ def main():
 	init_pub = rospy.Publisher('/convert/initCoord', Twist, queue_size=10)
 	# subscriber for toggling movement
 	movebool_sub = rospy.Subscriber('/toggleInit', Bool, toggle_callback)
-	# subscriber for initial position and rotation
-	toolpose_sub = rospy.Subscriber('/ur5e/toolpose', Twist, twist_callback)
-	# subscriber for sphere in camera frame
-	sphereparam_sub = rospy.Subscriber('/sphere_params', SphereParams, sphere_callback)
+	
 	while not rospy.is_shutdown():
+		# initialize SphereParams for publishing
 		exportSphere = SphereParams()
-		
 		# subscriber for initial position and rotation
 		toolpose_sub = rospy.Subscriber('/ur5e/toolpose', Twist, twist_callback)
 		# subscriber for sphere in camera frame
 		sphereparam_sub = rospy.Subscriber('/sphere_params', SphereParams, sphere_callback)
 	
-		# hold execution until initial position and rotation is set
+		# hold execution until initialization is started
 		print("Waiting for initialization msg on /toggleInit")
 		while not rospy.is_shutdown() and not toggleInit:
 			pass
 		
+		# unregister from /ur5e/toolpose and /sphere_params to prevent mid execution changes
 		toolpose_sub.unregister()
 		sphereparam_sub.unregister()
 		
 		# set loop rate to 10 Hz
 		loop_rate = rospy.Rate(10)
+		
 		print("Initializing")
 		while not rospy.is_shutdown():
 			if toggleInit:
@@ -89,6 +95,7 @@ def main():
 					loop_rate.sleep()
 					continue
 				
+				# create a PointStamped based on the sphere location in the camera frame
 				pt_in_cam = tf2_geometry_msgs.PointStamped()
 				pt_in_cam.header.frame_id = 'camera_color_optical_frame'
 				pt_in_cam.header.stamp = rospy.get_rostime()
@@ -98,6 +105,7 @@ def main():
 				# convert the 3D point to the base frame coordinates
 				pt_in_base = tfBuffer.transform(pt_in_cam,'base', rospy.Duration(1.0))
 				
+				# set new SphereParams based on base frame 
 				exportSphere.xc = pt_in_base.point.x
 				exportSphere.yc = pt_in_base.point.y
 				exportSphere.zc = pt_in_base.point.z
@@ -114,6 +122,7 @@ def main():
 				print("\nInitialized Toolpoase")
 				print(toolpose)
 			
+			# publishing exportSphere and toolpose for pickup_motion.py
 			sphere_pub.publish(exportSphere)
 			init_pub.publish(toolpose)
 			
