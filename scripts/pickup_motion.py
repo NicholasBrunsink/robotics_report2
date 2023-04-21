@@ -6,10 +6,9 @@ from std_msgs.msg import Bool
 from ur5e_control.msg import Plan
 from geometry_msgs.msg import Twist
 from robot_vision_lectures.msg import XYZarray, SphereParams
-import tf2_ros
-from tf.transformations import *
 from geometry_msgs.msg import Quaternion
 import tf2_geometry_msgs
+from std_msgs.msg import UInt8
 
 import math
 
@@ -42,6 +41,21 @@ def sphere_callback(data):
 	sphere.yc = data.yc
 	sphere.zc = data.zc
 	sphere.radius = data.radius
+	
+def createPoint(plan, x, y, z, roll, pitch, yaw, mode):
+	plan_point = Twist()
+	point_mode = UInt8()
+	# define point away from initial position to be the final point
+	plan_point.linear.x = x
+	plan_point.linear.y = y
+	plan_point.linear.z = z
+	plan_point.angular.x = roll
+	plan_point.angular.y = pitch
+	plan_point.angular.z = yaw
+	point_mode.data = mode
+	plan.points.append(plan_point)
+	plan.modes.append(point_mode)
+	return plan
 
 def main():
 	# initialize node
@@ -51,78 +65,44 @@ def main():
 	plan_pub = rospy.Publisher('/plan', Plan, queue_size = 10)
 	# subscriber for listening when to enable movement
 	movebool_sub = rospy.Subscriber('/toggleMove', Bool, toggle_callback)
+	# create subscriber to grab initial position and rotation
+	toolpose_sub = rospy.Subscriber('/convert/initCoord', Twist, twist_callback)
+	sphereparam_sub = rospy.Subscriber('/convert/sphereCoord', SphereParams, sphere_callback)
 	
+	
+	# set loop rate to 10 Hz
+	loop_rate = rospy.Rate(10)
 	while not rospy.is_shutdown():
-		# create subscriber to grab initial position and rotation
-		toolpose_sub = rospy.Subscriber('/convert/initCoord', Twist, twist_callback)
-		sphereparam_sub = rospy.Subscriber('/convert/sphereCoord', SphereParams, sphere_callback)
-	
-		print("\nWaiting for move initialization on topic /toggleMove")
-		# hold execution until initial position and rotation is set
-		while not rospy.is_shutdown() and not toggleMove:
-			pass
-		
-		print("Movement Initialized")
-	
-		# creating location to drop ball based on initial position
-		drop_point.linear.x = toolpose.linear.x + 0.001
-		drop_point.linear.y = toolpose.linear.y + 0.001
-		drop_point.linear.z = sphere.zc + 0.5*sphere.radius
-	
-		# set loop rate to 10 Hz
-		loop_rate = rospy.Rate(10)
-	
-		# define a plan variable
-		plan = Plan() 
-		
-		plan_point1 = Twist()
-		# define point away from initial position to be the final point
-		plan_point1.linear.x = drop_point.linear.x
-		plan_point1.linear.y = drop_point.linear.y
-		plan_point1.linear.z = drop_point.linear.z + 0.05
-		plan_point1.angular.x = toolpose.angular.x
-		plan_point1.angular.y = toolpose.angular.y
-		plan_point1.angular.z = toolpose.angular.z
-		# add this point to the plan
-		plan.points.append(plan_point1)
-		
-		plan_point2 = Twist()
-		# define a point at the initial position
-		plan_point2.linear.x = sphere.xc
-		plan_point2.linear.y = sphere.yc
-		plan_point2.linear.z = sphere.zc + 0.3
-		plan_point2.angular.x = toolpose.angular.x
-		plan_point2.angular.y = toolpose.angular.y
-		plan_point2.angular.z = toolpose.angular.z
-		# add this point to the plan
-		plan.points.append(plan_point2)
-		
-		plan_point3 = Twist()
-		# define a point  below initial position
-		plan_point3.linear.x = sphere.xc
-		plan_point3.linear.y = sphere.yc
-		plan_point3.linear.z = sphere.zc + 0.07
-		plan_point3.angular.x = toolpose.angular.x
-		plan_point3.angular.y = toolpose.angular.y
-		plan_point3.angular.z = toolpose.angular.z
-		# add this point to the plan
-		plan.points.append(plan_point3)
-		
-		plan_point4 = Twist()
-		# Define a point above the final position
-		plan_point4.linear.x = drop_point.linear.x
-		plan_point4.linear.y = drop_point.linear.y
-		plan_point4.linear.z = drop_point.linear.z + 0.2
-		plan_point4.angular.x = toolpose.angular.x
-		plan_point4.angular.y = toolpose.angular.y
-		plan_point4.angular.z = toolpose.angular.z
-		# add this point to the plan
-		plan.points.append(plan_point4)
-		
-	
-		while not rospy.is_shutdown() and toggleMove:
-			# publish the plan
-			plan_pub.publish(plan)
-			# wait for 0.1 seconds until the next loop and repeat
-			loop_rate.sleep()
+		if not toggleMove:
+			plan = Plan()
+			# initial point close to initial position
+			plan = createPoint(plan, toolpose.linear.x+0.001, toolpose.linear.y+0.001, toolpose.linear.z+0.001, toolpose.angular.x, toolpose.angular.y, toolpose.angular.z, 0) 		
+			# above ball
+			plan = createPoint(plan, sphere.xc, sphere.yc, toolpose.linear.z, toolpose.angular.x, toolpose.angular.y, toolpose.angular.z, 0)
+			# grabbing ball
+			plan = createPoint(plan, sphere.xc+0.001, sphere.yc+0.001, sphere.zc+0.001, toolpose.angular.x, toolpose.angular.y, toolpose.angular.z, 0)
+			plan = createPoint(plan, sphere.xc, sphere.yc, sphere.zc, toolpose.angular.x, toolpose.angular.y, toolpose.angular.z, 2)
+			plan = createPoint(plan, sphere.xc+0.001, sphere.yc+0.001, sphere.zc+0.001, toolpose.angular.x, toolpose.angular.y, toolpose.angular.z, 0)
+			# above ball
+			plan = createPoint(plan, sphere.xc, sphere.yc, toolpose.linear.z, toolpose.angular.x, toolpose.angular.y, toolpose.angular.z, 0)
+			# move above drop position
+			plan = createPoint(plan, sphere.xc+0.301, sphere.yc+0.001, toolpose.linear.z, toolpose.angular.x, toolpose.angular.y, toolpose.angular.z, 0)
+			# place ball
+			plan = createPoint(plan, sphere.xc+0.30, sphere.yc, sphere.zc+0.001, toolpose.angular.x, toolpose.angular.y, toolpose.angular.z, 0)
+			plan = createPoint(plan, sphere.xc+0.301, sphere.yc+0.001, sphere.zc, toolpose.angular.x, toolpose.angular.y, toolpose.angular.z, 1)
+			plan = createPoint(plan, sphere.xc+0.30, sphere.yc, sphere.zc+0.001, toolpose.angular.x, toolpose.angular.y, toolpose.angular.z, 0)
+			# above ball
+			plan = createPoint(plan, sphere.xc+0.300, sphere.yc, toolpose.linear.z, toolpose.angular.x, toolpose.angular.y, toolpose.angular.z, 0)
+			# move back to initial position
+			plan = createPoint(plan, toolpose.linear.x, toolpose.linear.y, toolpose.linear.z, toolpose.angular.x, toolpose.angular.y, toolpose.angular.z, 0)
+			print(plan)
+		else:
+			print("Beginning Path")
+			while not rospy.is_shutdown() and toggleMove:
+				# publish the plan
+				plan_pub.publish(plan)
+				# Wait for 0.1 seconds until the next loop and repeat
+				loop_rate.sleep()
+			
+		loop_rate.sleep()
 main()

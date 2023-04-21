@@ -37,11 +37,12 @@ if __name__ == '__main__':
 	# rotate wrist joint 2
 	pos_cmd_point.positions[4] = -math.pi/2
 	# rotate write joint 1
-	pos_cmd_point.positions[3] = -3*math.pi/4
+	pos_cmd_point.positions[3] = -math.pi/2
+	pos_cmd_point.positions[2] = math.pi/2
 	# just change the value of the command for the second joint
-	pos_cmd_point.positions[1] = -math.pi/4
+	pos_cmd_point.positions[1] = -math.pi/3
 	# just change the value of the command for the elbow joint
-	pos_cmd_point.positions[0] = math.pi/2
+	pos_cmd_point.positions[0] = math.pi/3
 	# add the trajectory point to the command
 	pos_cmd.points.append(pos_cmd_point)
 	# define a message header	
